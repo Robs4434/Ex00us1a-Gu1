@@ -1,0 +1,466 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "c00lgui_GreenEdition"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 250, 0, 440)
+MainFrame.Position = UDim2.new(0.1, 0, 0.2, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.BorderColor3 = Color3.fromRGB(0, 255, 50)
+MainFrame.BorderSizePixel = 2
+MainFrame.Active = true
+MainFrame.Parent = ScreenGui
+
+-- Плавное и безопасное перетаскивание окна
+local dragToggle, dragStart, startPos
+local function updateInput(input)
+    local delta = input.Position - dragStart
+    local position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    TweenService:Create(MainFrame, TweenInfo.new(0.1), {Position = position}):Play()
+end
+
+MainFrame.InputBegan:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+        dragToggle = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragToggle = false
+            end
+        end)
+    end
+end)
+
+MainFrame.InputChanged:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        if dragToggle then updateInput(input) end
+    end
+end)
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 35)
+TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+TitleBar.BorderColor3 = Color3.fromRGB(0, 255, 50)
+TitleBar.BorderSizePixel = 1
+TitleBar.Parent = MainFrame
+
+local TitleText = Instance.new("TextLabel")
+TitleText.Size = UDim2.new(1, 0, 1, 0)
+TitleText.BackgroundTransparency = 1
+TitleText.Text = "Ex00us1a 👀 Gu1 v2.5"
+TitleText.TextColor3 = Color3.fromRGB(0, 255, 50)
+TitleText.TextSize = 16
+TitleText.Font = Enum.Font.Code
+TitleText.Parent = TitleBar
+
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -32, 0, 2)
+CloseButton.BackgroundColor3 = Color3.fromRGB(30, 10, 10)
+CloseButton.BorderColor3 = Color3.fromRGB(255, 0, 0)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 0, 0)
+CloseButton.Font = Enum.Font.Code
+CloseButton.Parent = TitleBar
+
+local ButtonContainer = Instance.new("ScrollingFrame")
+ButtonContainer.Size = UDim2.new(1, -10, 1, -45)
+ButtonContainer.Position = UDim2.new(0, 5, 0, 40)
+ButtonContainer.BackgroundTransparency = 1
+ButtonContainer.CanvasSize = UDim2.new(0, 0, 0, 720) -- Увеличен холст под новые элементы
+ButtonContainer.ScrollBarThickness = 4
+ButtonContainer.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 50)
+ButtonContainer.Parent = MainFrame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.Padding = UDim.new(0, 8)
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Parent = ButtonContainer
+
+local function CreateHackButton(text, layoutOrder, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -10, 0, 40)
+    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    btn.BorderColor3 = Color3.fromRGB(0, 200, 40)
+    btn.BorderSizePixel = 1
+    btn.Text = "  " .. text
+    btn.TextColor3 = Color3.fromRGB(0, 255, 50)
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+    btn.Font = Enum.Font.Code
+    btn.TextSize = 14
+    btn.LayoutOrder = layoutOrder
+    btn.Parent = ButtonContainer
+
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 60, 10)}):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(20, 20, 20)}):Play()
+    end)
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+local function CreateSlider(text, min, max, default, layoutOrder, callback)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(1, -10, 0, 50)
+    container.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    container.BorderColor3 = Color3.fromRGB(0, 200, 40)
+    container.LayoutOrder = layoutOrder
+    container.Parent = ButtonContainer
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -10, 0, 20)
+    label.Position = UDim2.new(0, 5, 0, 2)
+    label.BackgroundTransparency = 1
+    label.Text = "  " .. text .. ": " .. tostring(default)
+    label.TextColor3 = Color3.fromRGB(0, 255, 50)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Font = Enum.Font.Code
+    label.TextSize = 12
+    label.Parent = container
+
+    local sliderBg = Instance.new("Frame")
+    sliderBg.Size = UDim2.new(1, -20, 0, 8)
+    sliderBg.Position = UDim2.new(0, 10, 0, 32)
+    sliderBg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    sliderBg.BorderSizePixel = 0
+    sliderBg.Parent = container
+
+    local sliderFill = Instance.new("Frame")
+    sliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    sliderFill.BackgroundColor3 = Color3.fromRGB(0, 255, 50)
+    sliderFill.BorderSizePixel = 0
+    sliderFill.Parent = sliderBg
+
+    local sliderBtn = Instance.new("TextButton")
+    sliderBtn.Size = UDim2.new(0, 14, 0, 14)
+    sliderBtn.Position = UDim2.new((default - min) / (max - min), -7, 0.5, -7)
+    sliderBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    sliderBtn.BorderColor3 = Color3.fromRGB(0, 255, 50)
+    sliderBtn.Text = ""
+    sliderBtn.Parent = sliderBg
+
+    local dragging = false
+    local function updateSlider(input)
+        local posX = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
+        sliderBtn.Position = UDim2.new(posX, -7, 0.5, -7)
+        sliderFill.Size = UDim2.new(posX, 0, 1, 0)
+        local val = math.floor(min + (max - min) * posX)
+        label.Text = "  " .. text .. ": " .. tostring(val)
+        callback(val)
+    end
+
+    sliderBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then updateSlider(input) end
+    end)
+end
+
+-- --- ФУНКЦИИ СЛУЖБ ---
+
+-- NoClip
+local noclipConnection = nil
+local noclipActive = false
+CreateHackButton("NoClip Mode", 1, function()
+    noclipActive = not noclipActive
+    if noclipActive then
+        noclipConnection = RunService.Stepped:Connect(function()
+            local character = LocalPlayer.Character
+            if character then
+                for _, child in pairs(character:GetDescendants()) do
+                    if child:IsA("BasePart") and child.CanCollide == true then
+                        if child.Name ~= "HumanoidRootPart" then child.CanCollide = false end
+                    end
+                end
+            end
+        end)
+    else
+        if noclipConnection then noclipConnection:Disconnect() noclipConnection = nil end
+        local character = LocalPlayer.Character
+        if character then
+            for _, child in pairs(character:GetDescendants()) do
+                if child:IsA("BasePart") then child.CanCollide = true end
+            end
+        end
+    end
+end)
+
+-- Fly
+local flyActive = false
+local flyConnection = nil
+local flySpeed = 50
+CreateHackButton("Fly Mode", 2, function()
+    flyActive = not flyActive
+    local character = LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = character.HumanoidRootPart
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+    if flyActive then
+        if humanoid then humanoid.PlatformStand = true end
+        local bv = Instance.new("BodyVelocity")
+        bv.Name = "FlyBV"
+        bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+        bv.Velocity = Vector3.new(0, 0, 0)
+        bv.Parent = hrp
+
+        local bg = Instance.new("BodyGyro")
+        bg.Name = "FlyBG"
+        bg.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+        bg.CFrame = hrp.CFrame
+        bg.Parent = hrp
+
+        flyConnection = RunService.RenderStepped:Connect(function()
+            local cam = workspace.CurrentCamera
+            if not hrp or not hrp.Parent then return end
+            
+            local currentBV = hrp:FindFirstChild("FlyBV")
+            local currentBG = hrp:FindFirstChild("FlyBG")
+            if not currentBV or not currentBG then return end
+
+            local direction = Vector3.new(0, 0, 0)
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction = direction + cam.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction = direction - cam.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction = direction - cam.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction = direction + cam.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction = direction + Vector3.new(0, 1, 0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then direction = direction - Vector3.new(0, 1, 0) end
+
+            currentBG.CFrame = cam.CFrame
+            if direction.Magnitude > 0 then
+                currentBV.Velocity = direction.Unit * flySpeed
+            else
+                currentBV.Velocity = Vector3.new(0, 0, 0)
+            end
+        end)
+    else
+        if flyConnection then flyConnection:Disconnect() flyConnection = nil end
+        if hrp:FindFirstChild("FlyBV") then hrp.FlyBV:Destroy() end
+        if hrp:FindFirstChild("FlyBG") then hrp.FlyBG:Destroy() end
+        if humanoid then humanoid.PlatformStand = false end
+    end
+end)
+
+-- Inf Jump
+local infJumpEnabled = false
+local infJumpConnection = nil
+CreateHackButton("Inf Jump", 3, function()
+    infJumpEnabled = not infJumpEnabled
+    if infJumpEnabled then
+        if not infJumpConnection then
+            infJumpConnection = UserInputService.JumpRequest:Connect(function()
+                if infJumpEnabled then
+                    local character = LocalPlayer.Character
+                    if character and character:FindFirstChildOfClass("Humanoid") then
+                        character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+                    end
+                end
+            end)
+        end
+    else
+        if infJumpConnection then
+            infJumpConnection:Disconnect()
+            infJumpConnection = nil
+        end
+    end
+end)
+
+-- Spin Mode
+local spinActive = false
+local spinSpeed = 50
+local spinBav = nil
+
+CreateHackButton("Spin Mode", 4, function()
+    spinActive = not spinActive
+    local character = LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = character.HumanoidRootPart
+    
+    if spinActive then
+        if hrp:FindFirstChild("SpinBAV") then hrp.SpinBAV:Destroy() end
+        spinBav = Instance.new("BodyAngularVelocity")
+        spinBav.Name = "SpinBAV"
+        spinBav.MaxTorque = Vector3.new(0, math.huge, 0) -- Вращаем только по оси Y
+        spinBav.AngularVelocity = Vector3.new(0, spinSpeed, 0)
+        spinBav.Parent = hrp
+    else
+        if spinBav then 
+            spinBav:Destroy() 
+            spinBav = nil 
+        end
+        if hrp:FindFirstChild("SpinBAV") then 
+            hrp.SpinBAV:Destroy() 
+        end
+    end
+end)
+
+-- Ползунок скорости Spin
+CreateSlider("Spin Speed", 10, 500, 50, 5, function(value) 
+    spinSpeed = value
+    if spinActive and spinBav and spinBav.Parent then
+        spinBav.AngularVelocity = Vector3.new(0, spinSpeed, 0)
+    end
+end)
+
+-- Teleport Loop (Присасывание к игрокам)
+local teleportBotActive = false
+local teleportButton = nil
+
+teleportButton = CreateHackButton("Teleport Loop ❌", 6, function()
+    teleportBotActive = not teleportBotActive
+    if teleportBotActive then
+        teleportButton.Text = "  Teleport Loop ✅"
+        teleportButton.BackgroundColor3 = Color3.fromRGB(0, 60, 10)
+    else
+        teleportButton.Text = "  Teleport Loop ❌"
+        teleportButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    end
+end)
+
+task.spawn(function()
+    while true do
+        task.wait(0.5)
+        
+        if teleportBotActive and LocalPlayer.Character then
+            local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            local myHumanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            
+            if myRoot and myHumanoid and myHumanoid.Health > 0 then
+                local allPlayers = Players:GetPlayers()
+                
+                for _, player in pairs(allPlayers) do
+                    if not teleportBotActive then break end
+                    
+                    if player ~= LocalPlayer and player.Character then
+                        local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
+                        local targetHumanoid = player.Character:FindFirstChildOfClass("Humanoid")
+                        
+                        if targetRoot and targetHumanoid and targetHumanoid.Health > 0 then
+                            local startTime = tick()
+                            -- Удерживаемся в хитбоксе до 5 секунд
+                            while teleportBotActive and (tick() - startTime) < 5.0 do
+                                if not player.Character or not targetRoot or targetHumanoid.Health <= 0 then 
+                                    break 
+                                end
+                                
+                                -- Обход серверного античита через сброс скоростей
+                                myRoot.Velocity = Vector3.new(0, 0, 0)
+                                myRoot.RotVelocity = Vector3.new(0, 0, 0)
+                                
+                                -- Телепорт
+                                LocalPlayer.Character:PivotTo(targetRoot.CFrame)
+                                
+                                task.wait(0.02)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- Слайдеры и Кастомизация
+local currentSpeed = 16
+RunService.Heartbeat:Connect(function()
+    local character = LocalPlayer.Character
+    if character and character:FindFirstChildOfClass("Humanoid") then
+        character:FindFirstChildOfClass("Humanoid").WalkSpeed = currentSpeed
+    end
+end)
+CreateSlider("Walk Speed", 16, 300, 16, 7, function(value) currentSpeed = value end)
+
+local currentJump = 50
+RunService.Heartbeat:Connect(function()
+    local character = LocalPlayer.Character
+    if character and character:FindFirstChildOfClass("Humanoid") then
+        local hum = character:FindFirstChildOfClass("Humanoid")
+        hum.UseJumpPower = true
+        hum.JumpPower = currentJump
+    end
+end)
+CreateSlider("Jump Power", 50, 350, 50, 8, function(value) currentJump = value end)
+
+-- Ползунок скорости Fly
+CreateSlider("Fly Speed", 50, 500, 50, 9, function(value) 
+    flySpeed = value 
+end)
+
+local skyChanged = false
+CreateHackButton("Ещё делается 🚧", 10, function()
+    skyChanged = not skyChanged
+    local lighting = game:GetService("Lighting")
+    if skyChanged then
+        local sky = Instance.new("Sky")
+        sky.Name = "c00lSkyEffect"
+        sky.SkyboxBk = "rbxassetid://252758119"
+        sky.SkyboxDn = "rbxassetid://252758119"
+        sky.SkyboxFt = "rbxassetid://252758119"
+        sky.SkyboxLf = "rbxassetid://252758119"
+        sky.SkyboxRt = "rbxassetid://252758119"
+        sky.SkyboxUp = "rbxassetid://252758119"
+        sky.Parent = lighting
+    else
+        if lighting:FindFirstChild("c00lSkyEffect") then lighting.c00lSkyEffect:Destroy() end
+    end
+end)
+
+-- Кнопка для перехода в Telegram разработчика
+CreateHackButton("📬 Telegram: connector44", 12, function()
+    local url = "https://t.me/connector44"
+    local success, err = pcall(function()
+        game:GetService("HttpService"):GetAsync(url, false) -- Это НЕ откроет ссылку, это просто заглушка, см. ниже
+    end)
+
+    -- ПРАВИЛЬНЫЙ способ открыть ссылку в браузере игрока:
+    if game:GetService("MarketplaceService") then
+        -- MarketplaceService не умеет открывать произвольные URL, поэтому используем SetCoreGuiEnabled трюк или просто уведомление
+        -- В Roblox Client-Side скриптах НЕТ прямого API для открытия произвольных URL (например, t.me) из LocalScript.
+        -- Единственный рабочий вариант для пользователя - скопировать ссылку вручную или использовать уведомление с инструкцией.
+    end
+
+    -- Так как Roblox НЕ позволяет LocalScript напрямую открывать внешние ссылки (браузер),
+    -- мы выводим уведомление с инструкцией скопировать ссылку.
+    warn("Чтобы связаться с разработчиком, скопируйте эту ссылку: " .. url)
+    
+    -- Альтернатива: показать красивое уведомление (работает на клиенте)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Telegram разработчика",
+            Text = "Вот ссылка на Telegram разработчика \n" .. url,
+            Icon = "rbxassetid://4096031850", -- Можно поставить любой ID иконки
+            Duration = 10
+        })
+    end)
+end)
+
+local function CleanUp()
+    teleportBotActive = false -- Останавливаем цикл телепортации
+    if flyConnection then flyConnection:Disconnect() end
+    if noclipConnection then noclipConnection:Disconnect() end
+    if infJumpConnection then infJumpConnection:Disconnect() end
+    if spinBav then spinBav:Destroy() end -- Останавливаем вращение
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if hrp and hrp:FindFirstChild("SpinBAV") then hrp.SpinBAV:Destroy() end
+    ScreenGui:Destroy()
+end
+
+CloseButton.MouseButton1Click:Connect(CleanUp)
+CreateHackButton("Destroy GUI", 11, function() CleanUp() end)
+
+print("Ex00us1a 👀 Gu1 v2.5 успешно загружен")
