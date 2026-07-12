@@ -2,12 +2,54 @@ local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
 
 local LocalPlayer = Players.LocalPlayer
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "c00lgui_GreenEdition"
+ScreenGui.Name = "Ex00us1a 👀 Gu1 v2.5"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local LoadingFrame = Instance.new("Frame")
+LoadingFrame.Name = "LoadingFrame"
+LoadingFrame.Size = UDim2.new(0, 250, 0, 150)
+LoadingFrame.Position = UDim2.new(0.5, -125, 0.4, -75)
+LoadingFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+LoadingFrame.BorderColor3 = Color3.fromRGB(0, 255, 50)
+LoadingFrame.BorderSizePixel = 2
+LoadingFrame.Parent = ScreenGui
+
+local LoadingTitle = Instance.new("TextLabel")
+LoadingTitle.Size = UDim2.new(1, 0, 0, 40)
+LoadingTitle.BackgroundTransparency = 1
+LoadingTitle.Text = "Ex00us1a 👀 Gu1"
+LoadingTitle.TextColor3 = Color3.fromRGB(0, 255, 50)
+LoadingTitle.TextSize = 20
+LoadingTitle.Font = Enum.Font.Code
+LoadingTitle.Parent = LoadingFrame
+
+local LoadingStatus = Instance.new("TextLabel")
+LoadingStatus.Size = UDim2.new(1, 0, 0, 20)
+LoadingStatus.Position = UDim2.new(0, 0, 0, 50)
+LoadingStatus.BackgroundTransparency = 1
+LoadingStatus.Text = "StArt1ng..."
+LoadingStatus.TextColor3 = Color3.fromRGB(150, 150, 150)
+LoadingStatus.TextSize = 12
+LoadingStatus.Font = Enum.Font.Code
+LoadingStatus.Parent = LoadingFrame
+
+local BarBg = Instance.new("Frame")
+BarBg.Size = UDim2.new(0.85, 0, 0, 10)
+BarBg.Position = UDim2.new(0.075, 0, 0, 90)
+BarBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+BarBg.BorderSizePixel = 0
+BarBg.Parent = LoadingFrame
+
+local BarFill = Instance.new("Frame")
+BarFill.Size = UDim2.new(0, 0, 1, 0)
+BarFill.BackgroundColor3 = Color3.fromRGB(0, 255, 50)
+BarFill.BorderSizePixel = 0
+BarFill.Parent = BarBg
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
@@ -17,9 +59,9 @@ MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 MainFrame.BorderColor3 = Color3.fromRGB(0, 255, 50)
 MainFrame.BorderSizePixel = 2
 MainFrame.Active = true
+MainFrame.Visible = false
 MainFrame.Parent = ScreenGui
 
--- Плавное и безопасное перетаскивание окна
 local dragToggle, dragStart, startPos
 local function updateInput(input)
     local delta = input.Position - dragStart
@@ -43,6 +85,86 @@ end)
 MainFrame.InputChanged:Connect(function(input)
     if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         if dragToggle then updateInput(input) end
+    end
+end)
+
+local resizeToggle = false
+local resizeType = ""
+local resizeStartSize, resizeStartDrag
+local MIN_SIZE = Vector2.new(200, 200)
+
+local ResizeRight = Instance.new("Frame")
+ResizeRight.Name = "ResizeRight"
+ResizeRight.Size = UDim2.new(0, 6, 1, -6)
+ResizeRight.Position = UDim2.new(1, -6, 0, 0)
+ResizeRight.BackgroundTransparency = 1
+ResizeRight.ZIndex = 10
+ResizeRight.Parent = MainFrame
+
+local ResizeBottom = Instance.new("Frame")
+ResizeBottom.Name = "ResizeBottom"
+ResizeBottom.Size = UDim2.new(1, -6, 0, 6)
+ResizeBottom.Position = UDim2.new(0, 0, 1, -6)
+ResizeBottom.BackgroundTransparency = 1
+ResizeBottom.ZIndex = 10
+ResizeBottom.Parent = MainFrame
+
+local ResizeCorner = Instance.new("Frame")
+ResizeCorner.Name = "ResizeCorner"
+ResizeCorner.Size = UDim2.new(0, 8, 0, 8)
+ResizeCorner.Position = UDim2.new(1, -8, 1, -8)
+ResizeCorner.BackgroundTransparency = 1
+ResizeCorner.ZIndex = 11
+ResizeCorner.Parent = MainFrame
+
+local function initResize(input, t)
+    resizeToggle = true
+    resizeType = t
+    resizeStartDrag = input.Position
+    resizeStartSize = MainFrame.AbsoluteSize
+    
+    local releaseConnection
+    releaseConnection = input.Changed:Connect(function()
+        if input.UserInputState == Enum.UserInputState.End then
+            resizeToggle = false
+            releaseConnection:Disconnect()
+        end
+    end)
+end
+
+ResizeRight.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        initResize(input, "X")
+    end
+end)
+
+ResizeBottom.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        initResize(input, "Y")
+    end
+end)
+
+ResizeCorner.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        initResize(input, "XY")
+    end
+end)
+
+local resizeConnection
+resizeConnection = UserInputService.InputChanged:Connect(function(input)
+    if resizeToggle and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - resizeStartDrag
+        local newWidth = resizeStartSize.X
+        local newHeight = resizeStartSize.Y
+        
+        if resizeType == "X" or resizeType == "XY" then
+            newWidth = math.max(MIN_SIZE.X, resizeStartSize.X + delta.X)
+        end
+        if resizeType == "Y" or resizeType == "XY" then
+            newHeight = math.max(MIN_SIZE.Y, resizeStartSize.Y + delta.Y)
+        end
+        
+        MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
     end
 end)
 
@@ -76,7 +198,7 @@ local ButtonContainer = Instance.new("ScrollingFrame")
 ButtonContainer.Size = UDim2.new(1, -10, 1, -45)
 ButtonContainer.Position = UDim2.new(0, 5, 0, 40)
 ButtonContainer.BackgroundTransparency = 1
-ButtonContainer.CanvasSize = UDim2.new(0, 0, 0, 720) -- Увеличен холст под новые элементы
+ButtonContainer.CanvasSize = UDim2.new(0, 0, 0, 760)
 ButtonContainer.ScrollBarThickness = 4
 ButtonContainer.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 50)
 ButtonContainer.Parent = MainFrame
@@ -171,9 +293,6 @@ local function CreateSlider(text, min, max, default, layoutOrder, callback)
     end)
 end
 
--- --- ФУНКЦИИ СЛУЖБ ---
-
--- NoClip
 local noclipConnection = nil
 local noclipActive = false
 CreateHackButton("NoClip Mode", 1, function()
@@ -200,7 +319,6 @@ CreateHackButton("NoClip Mode", 1, function()
     end
 end)
 
--- Fly
 local flyActive = false
 local flyConnection = nil
 local flySpeed = 50
@@ -256,7 +374,6 @@ CreateHackButton("Fly Mode", 2, function()
     end
 end)
 
--- Inf Jump
 local infJumpEnabled = false
 local infJumpConnection = nil
 CreateHackButton("Inf Jump", 3, function()
@@ -280,7 +397,6 @@ CreateHackButton("Inf Jump", 3, function()
     end
 end)
 
--- Spin Mode
 local spinActive = false
 local spinSpeed = 50
 local spinBav = nil
@@ -295,29 +411,425 @@ CreateHackButton("Spin Mode", 4, function()
         if hrp:FindFirstChild("SpinBAV") then hrp.SpinBAV:Destroy() end
         spinBav = Instance.new("BodyAngularVelocity")
         spinBav.Name = "SpinBAV"
-        spinBav.MaxTorque = Vector3.new(0, math.huge, 0) -- Вращаем только по оси Y
+        spinBav.MaxTorque = Vector3.new(0, math.huge, 0)
         spinBav.AngularVelocity = Vector3.new(0, spinSpeed, 0)
         spinBav.Parent = hrp
     else
-        if spinBav then 
-            spinBav:Destroy() 
-            spinBav = nil 
+        if spinBav then
+            spinBav:Destroy()
+            spinBav = nil
         end
-        if hrp:FindFirstChild("SpinBAV") then 
-            hrp.SpinBAV:Destroy() 
+        if hrp:FindFirstChild("SpinBAV") then
+            hrp.SpinBAV:Destroy()
         end
     end
 end)
 
--- Ползунок скорости Spin
-CreateSlider("Spin Speed", 10, 500, 50, 5, function(value) 
+CreateSlider("Spin Speed", 10, 500, 50, 5, function(value)
     spinSpeed = value
     if spinActive and spinBav and spinBav.Parent then
         spinBav.AngularVelocity = Vector3.new(0, spinSpeed, 0)
     end
 end)
 
--- Teleport Loop (Присасывание к игрокам)
+local trailActive = false
+local trailButton = nil
+
+trailButton = CreateHackButton("HaRak1r1", 5.7, function()
+    trailActive = not trailActive
+    
+    if trailActive then
+        trailButton.Text = "  HaRak1r1"
+        trailButton.BackgroundColor3 = Color3.fromRGB(0, 60, 10)
+        
+        coroutine.wrap(function()
+
+        while true do
+        EB_foundChild = game.Players.LocalPlayer.Character:FindFirstChild(tostring((tostring([[HumanoidRootPart]]))))
+        EB_created = Instance.new((tostring([[Part]])))
+        EB_created.Parent = game:FindFirstChild('Workspace')
+        if EB_created then
+            EB_created[(tostring([[Position]]))] = EB_foundChild[tostring((tostring([[Position]])))]
+        end
+
+        task.wait()
+        end
+
+
+        end)()
+    else
+        trailButton.Text = "  HaRak1r1"
+        trailButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    end
+end)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+local lockOnKey = Enum.KeyCode.C
+local aimActive = false     
+local isLocking = false      
+local currentTarget = nil
+
+local inputConnection = nil
+local renderConnection = nil
+local aimButton = nil
+
+local Lighting = game:GetService("Lighting")
+local noFogActive = false
+local noFogButton = nil
+local originalFogValues = {}
+
+noFogButton = CreateHackButton("No Fog 🌫️ ❌", 6.1, function()
+    noFogActive = not noFogActive
+    
+    if noFogActive then
+        noFogButton.Text = "  No Fog 🌫️ ✅"
+        noFogButton.BackgroundColor3 = Color3.fromRGB(0, 60, 10)
+        
+        originalFogValues.FogStart = Lighting.FogStart
+        originalFogValues.FogEnd = Lighting.FogEnd
+        
+        Lighting.FogStart = 999999
+        Lighting.FogEnd = 999999
+        
+        local atmos = Lighting:FindFirstChildOfClass("Atmosphere")
+        if atmos then
+            originalFogValues.AtmosDensity = atmos.Density
+            atmos.Density = 0
+        end
+    else
+        noFogButton.Text = "  No Fog 🌫️ ❌"
+        noFogButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        
+        Lighting.FogStart = originalFogValues.FogStart or 0
+        Lighting.FogEnd = originalFogValues.FogEnd or 100000
+        
+        local atmos = Lighting:FindFirstChildOfClass("Atmosphere")
+        if atmos and originalFogValues.AtmosDensity then
+            atmos.Density = originalFogValues.AtmosDensity
+        end
+    end
+end)
+
+local fbActive = false
+local fbButton = nil
+local fbConnection = nil
+
+local function applyFullBright()
+    Lighting.Ambient = Color3.fromRGB(255, 255, 255)
+    Lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
+    Lighting.Brightness = 2
+    Lighting.ClockTime = 14 
+    Lighting.GlobalShadows = false 
+end
+
+fbButton = CreateHackButton("Full Bright ☀️ ❌", 6.3, function()
+    fbActive = not fbActive
+    
+    if fbActive then
+        fbButton.Text = "  Full Bright ☀️ ✅"
+        fbButton.BackgroundColor3 = Color3.fromRGB(0, 60, 10)
+
+        applyFullBright()
+        
+        fbConnection = Lighting.Changed:Connect(function()
+            if fbActive then
+                applyFullBright()
+            end
+        end)
+    else
+        fbButton.Text = "  Full Bright ☀️ ❌"
+        fbButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        
+        if fbConnection then
+            fbConnection:Disconnect()
+            fbConnection = nil
+        end
+        
+        Lighting.Ambient = Color3.fromRGB(128, 128, 128)
+        Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+        Lighting.Brightness = 1
+        Lighting.ClockTime = 12
+        Lighting.GlobalShadows = true
+    end
+end)
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local espActive = false
+local espButton = nil
+local espConnections = {}
+
+local function applyESP(player)
+    if player == LocalPlayer then return end 
+    
+    local function setupHighlight(character)
+        if not espActive then return end
+        
+        local oldHighlight = character:FindFirstChild("MyPlayerESP")
+        if oldHighlight then oldHighlight:Destroy() end
+        
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "MyPlayerESP"
+        
+        highlight.FillColor = Color3.fromRGB(0, 255, 0)     
+        highlight.FillTransparency = 0.5                     
+        highlight.OutlineColor = Color3.fromRGB(0, 255, 0)   
+        highlight.OutlineTransparency = 0                    
+        
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        highlight.Parent = character
+    end
+
+    if player.Character then
+        setupHighlight(player.Character)
+    end
+
+    local charAddedConn = player.CharacterAdded:Connect(setupHighlight)
+    table.insert(espConnections, charAddedConn)
+end
+
+espButton = CreateHackButton("Player ESP 👥 ❌", 6.5, function()
+    espActive = not espActive
+    
+    if espActive then
+        espButton.Text = "  Player ESP 👥 ✅"
+        espButton.BackgroundColor3 = Color3.fromRGB(0, 60, 10)
+        
+        for _, player in pairs(Players:GetPlayers()) do
+            applyESP(player)
+        end
+        
+        local playerAddedConn = Players.PlayerAdded:Connect(applyESP)
+        table.insert(espConnections, playerAddedConn)
+    else
+        espButton.Text = "  Player ESP 👥 ❌"
+        espButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        
+        for _, connection in pairs(espConnections) do
+            if connection then connection:Disconnect() end
+        end
+        table.clear(espConnections)
+        
+        for _, player in pairs(Players:GetPlayers()) do
+            if player.Character then
+                local highlight = player.Character:FindFirstChild("MyPlayerESP")
+                if highlight then highlight:Destroy() end
+            end
+        end
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    if player.Character then
+        local highlight = player.Character:FindFirstChild("MyPlayerESP")
+        if highlight then highlight:Destroy() end
+    end
+end)
+
+local iyExecuted = false
+local iyButton = nil
+
+iyButton = CreateHackButton("Infinite Yield 🌀", 5.9, function()
+    if not iyExecuted then
+        iyExecuted = true
+        iyButton.Text = "  Infinite Yield 🌀"
+        iyButton.BackgroundColor3 = Color3.fromRGB(0, 60, 10)
+        
+        task.spawn(function()
+            pcall(function()
+                loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+            end)
+        end)
+    else
+        iyButton.Text = "  Already Loaded! 🌀"
+        task.delay(1.5, function()
+            iyButton.Text = "  Infinite Yield 🌀"
+        end)
+    end
+end)
+
+local trailActive = false
+local trailButton = nil
+
+trailButton = CreateHackButton("Brick Trail 💩", 5.7, function()
+    trailActive = not trailActive
+    
+    if trailActive then
+        trailButton.Text = "  Brick Trail 💩"
+        trailButton.BackgroundColor3 = Color3.fromRGB(0, 60, 10)
+        
+        task.spawn(function()
+            while trailActive do
+                local character = LocalPlayer.Character
+                local EB_foundChild = character and character:FindFirstChild("HumanoidRootPart")
+                
+                if EB_foundChild then
+
+                    local EB_created = Instance.new("Part")
+                    EB_created.Parent = workspace
+                    EB_created.Position = EB_foundChild.Position
+                    
+
+                    EB_created.Anchored = true      
+                    EB_created.CanCollide = false    
+                    EB_created.Size = Vector3.new(2, 0.5, 2)
+                    EB_created.Material = Enum.Material.Neon
+                    EB_created.Color = Color3.fromRGB(0, 255, 50) 
+                    
+                    game:GetService("Debris"):AddItem(EB_created, 3)
+                end
+                
+                task.wait() 
+            end
+        end)
+    else
+        trailButton.Text = "  Brick Trail 💩"
+        trailButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    end
+end)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+
+local maxZoom = 1000            
+local minZoom = 0.5             
+local XRAY_TRANSPARENCY = 0.5   
+local MAX_RAY_DISTANCE = 1000   
+
+local hiddenParts = {}
+local cameraActive = false
+local cameraButton = nil
+
+local function resetPreviousParts()
+    for part, originalTransparency in pairs(hiddenParts) do
+        if part and part.Parent then
+            part.Transparency = originalTransparency
+        end
+    end
+    table.clear(hiddenParts)
+end
+
+cameraButton = CreateHackButton("Camera Tweak ❌", 5.5, function()
+    cameraActive = not cameraActive
+    
+    if cameraActive then
+        cameraButton.Text = "  Camera Tweak ✅"
+        cameraButton.BackgroundColor3 = Color3.fromRGB(0, 60, 10)
+        
+        camera.CameraType = Enum.CameraType.Custom
+        player.CameraMaxZoomDistance = maxZoom
+        player.CameraMinZoomDistance = minZoom
+        
+        RunService:BindToRenderStep("ForsakenCameraPositionFix", Enum.RenderPriority.Camera.Value + 1, function()
+            local character = player.Character
+            local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+            
+            if not rootPart or not camera then return end
+
+            local currentZoom = (camera.CFrame.Position - rootPart.Position).Magnitude
+            if currentZoom <= 2 then return end 
+
+            local lookVector = camera.CFrame.LookVector
+            local targetPosition = rootPart.Position - (lookVector * currentZoom) + Vector3.new(0, 2, 0)
+            camera.CFrame = CFrame.new(targetPosition, targetPosition + lookVector)
+        end)
+
+        RunService:BindToRenderStep("ForsakenCameraXRayFix", Enum.RenderPriority.Camera.Value + 2, function()
+            local character = player.Character
+            local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+            
+            if not rootPart or not camera then 
+                resetPreviousParts()
+                return 
+            end
+
+            local currentZoom = (camera.CFrame.Position - rootPart.Position).Magnitude
+            if currentZoom <= 2 then
+                resetPreviousParts()
+                return
+            end
+
+            local raycastParams = RaycastParams.new()
+            raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+            raycastParams.FilterDescendantsInstances = {character}
+            raycastParams.IgnoreWater = true
+
+            local origin = rootPart.Position + Vector3.new(0, 2, 0)
+            local destination = camera.CFrame.Position
+            local direction = destination - origin
+
+            if direction.Magnitude > MAX_RAY_DISTANCE then
+                direction = direction.Unit * MAX_RAY_DISTANCE
+                destination = origin + direction
+            end
+
+            local currentObstacles = {}
+            local currentOrigin = origin
+            local currentDirection = direction
+
+            for i = 1, 10 do
+                local raycastResult = workspace:Raycast(currentOrigin, currentDirection, raycastParams)
+                
+                if raycastResult and raycastResult.Instance then
+                    local hitPart = raycastResult.Instance
+                    
+                    if hitPart:IsA("BasePart") and hitPart.CanCollide and hitPart.Name ~= "Terrain" then
+                        local size = hitPart.Size
+                        local isSkyboxOrHugeWall = (size.X > 80 or size.Y > 80 or size.Z > 80)
+                        local isAlreadyInvisible = hitPart.Transparency >= 0.9
+                        
+                        if not isSkyboxOrHugeWall and not isAlreadyInvisible then
+                            currentObstacles[hitPart] = true
+                            
+                            if not hiddenParts[hitPart] then
+                                hiddenParts[hitPart] = hitPart.Transparency
+                            end
+                            hitPart.Transparency = XRAY_TRANSPARENCY
+                        end
+                    end
+                    
+                    currentOrigin = raycastResult.Position + (direction.Unit * 0.1)
+                    currentDirection = destination - currentOrigin
+                    if currentDirection.Magnitude < 0.5 then break end
+                else
+                    break
+                end
+            end
+
+            for part, originalTransparency in pairs(hiddenParts) do
+                if not currentObstacles[part] then
+                    if part and part.Parent then
+                        part.Transparency = originalTransparency
+                    end
+                    hiddenParts[part] = nil
+                end
+            end
+        end)
+    else
+        cameraButton.Text = "  Camera Tweak ❌"
+        cameraButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        
+        RunService:UnbindFromRenderStep("ForsakenCameraPositionFix")
+        RunService:UnbindFromRenderStep("ForsakenCameraXRayFix")
+        
+        resetPreviousParts()
+        
+        player.CameraMaxZoomDistance = 400
+        player.CameraMinZoomDistance = 0.5
+    end
+end)
+
+player.CharacterRemoving:Connect(resetPreviousParts)
+
 local teleportBotActive = false
 local teleportButton = nil
 
@@ -335,36 +847,27 @@ end)
 task.spawn(function()
     while true do
         task.wait(0.5)
-        
         if teleportBotActive and LocalPlayer.Character then
             local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
             local myHumanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
             
             if myRoot and myHumanoid and myHumanoid.Health > 0 then
                 local allPlayers = Players:GetPlayers()
-                
                 for _, player in pairs(allPlayers) do
                     if not teleportBotActive then break end
-                    
                     if player ~= LocalPlayer and player.Character then
                         local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
                         local targetHumanoid = player.Character:FindFirstChildOfClass("Humanoid")
                         
                         if targetRoot and targetHumanoid and targetHumanoid.Health > 0 then
                             local startTime = tick()
-                            -- Удерживаемся в хитбоксе до 5 секунд
                             while teleportBotActive and (tick() - startTime) < 5.0 do
-                                if not player.Character or not targetRoot or targetHumanoid.Health <= 0 then 
-                                    break 
+                                if not player.Character or not targetRoot or targetHumanoid.Health <= 0 then
+                                    break
                                 end
-                                
-                                -- Обход серверного античита через сброс скоростей
                                 myRoot.Velocity = Vector3.new(0, 0, 0)
                                 myRoot.RotVelocity = Vector3.new(0, 0, 0)
-                                
-                                -- Телепорт
                                 LocalPlayer.Character:PivotTo(targetRoot.CFrame)
-                                
                                 task.wait(0.02)
                             end
                         end
@@ -375,7 +878,6 @@ task.spawn(function()
     end
 end)
 
--- Слайдеры и Кастомизация
 local currentSpeed = 16
 RunService.Heartbeat:Connect(function()
     local character = LocalPlayer.Character
@@ -396,9 +898,8 @@ RunService.Heartbeat:Connect(function()
 end)
 CreateSlider("Jump Power", 50, 350, 50, 8, function(value) currentJump = value end)
 
--- Ползунок скорости Fly
-CreateSlider("Fly Speed", 50, 500, 50, 9, function(value) 
-    flySpeed = value 
+CreateSlider("Fly Speed", 50, 500, 50, 9, function(value)
+    flySpeed = value
 end)
 
 local skyChanged = false
@@ -420,41 +921,29 @@ CreateHackButton("Ещё делается 🚧", 10, function()
     end
 end)
 
--- Кнопка для перехода в Telegram разработчика
-CreateHackButton("📬 Telegram: connector44", 12, function()
-    local url = "https://t.me/connector44"
-    local success, err = pcall(function()
-        game:GetService("HttpService"):GetAsync(url, false) -- Это НЕ откроет ссылку, это просто заглушка, см. ниже
-    end)
-
-    -- ПРАВИЛЬНЫЙ способ открыть ссылку в браузере игрока:
-    if game:GetService("MarketplaceService") then
-        -- MarketplaceService не умеет открывать произвольные URL, поэтому используем SetCoreGuiEnabled трюк или просто уведомление
-        -- В Roblox Client-Side скриптах НЕТ прямого API для открытия произвольных URL (например, t.me) из LocalScript.
-        -- Единственный рабочий вариант для пользователя - скопировать ссылку вручную или использовать уведомление с инструкцией.
-    end
-
-    -- Так как Roblox НЕ позволяет LocalScript напрямую открывать внешние ссылки (браузер),
-    -- мы выводим уведомление с инструкцией скопировать ссылку.
-    warn("Чтобы связаться с разработчиком, скопируйте эту ссылку: " .. url)
+CreateHackButton("📬 Discord: https://discord.gg/Fy2XdTHry", 12, function()
+    local url = "https://discord.gg/Fy2XdTHry"
+    warn("Чтобы связаться с нами, скопируйте эту ссылку: " .. url)
     
-    -- Альтернатива: показать красивое уведомление (работает на клиенте)
     pcall(function()
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Telegram разработчика",
-            Text = "Вот ссылка на Telegram разработчика \n" .. url,
-            Icon = "rbxassetid://4096031850", -- Можно поставить любой ID иконки
+        StarterGui:SetCore("SendNotification", {
+            Title = "Discord",
+            Text = "Вот ссылка на Discord канал \n" .. url,
+            Icon = "rbxassetid://4096031850",
             Duration = 10
         })
     end)
 end)
 
 local function CleanUp()
-    teleportBotActive = false -- Останавливаем цикл телепортации
+    teleportBotActive = false
+    flingActive = false
     if flyConnection then flyConnection:Disconnect() end
     if noclipConnection then noclipConnection:Disconnect() end
     if infJumpConnection then infJumpConnection:Disconnect() end
-    if spinBav then spinBav:Destroy() end -- Останавливаем вращение
+    if resizeConnection then resizeConnection:Disconnect() end
+    if flingConnection then flingConnection:Disconnect() end
+    if spinBav then spinBav:Destroy() end
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if hrp and hrp:FindFirstChild("SpinBAV") then hrp.SpinBAV:Destroy() end
     ScreenGui:Destroy()
@@ -463,4 +952,46 @@ end
 CloseButton.MouseButton1Click:Connect(CleanUp)
 CreateHackButton("Destroy GUI", 11, function() CleanUp() end)
 
-print("Ex00us1a 👀 Gu1 v2.5 успешно загружен")
+task.spawn(function()
+    LoadingStatus.Text = "Загрузка ScR1pt меню..."
+    TweenService:Create(BarFill, TweenInfo.new(0.6, Enum.EasingStyle.Linear), {Size = UDim2.new(0.3, 0, 1, 0)}):Play()
+    task.wait(0.7)
+    
+    LoadingStatus.Text = "Обход серверных проверок..."
+    TweenService:Create(BarFill, TweenInfo.new(0.8, Enum.EasingStyle.Linear), {Size = UDim2.new(0.7, 0, 1, 0)}):Play()
+    task.wait(0.9)
+    
+    LoadingStatus.Text = "Внедрение интерфейса..."
+    TweenService:Create(BarFill, TweenInfo.new(0.4, Enum.EasingStyle.Linear), {Size = UDim2.new(1, 0, 1, 0)}):Play()
+    task.wait(0.5)
+    
+    LoadingStatus.Text = "SuCC3ssfu11y!"
+    LoadingStatus.TextColor3 = Color3.fromRGB(0, 255, 50)
+    task.wait(0.3)
+    
+    local fadeTween = TweenService:Create(LoadingFrame, TweenInfo.new(0.3), {BackgroundTransparency = 1, BorderSizePixel = 0})
+    TweenService:Create(LoadingTitle, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+    TweenService:Create(LoadingStatus, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+    TweenService:Create(BarBg, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+    TweenService:Create(BarFill, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+    fadeTween:Play()
+    
+    fadeTween.Completed:Connect(function()
+        LoadingFrame:Destroy()
+        
+        MainFrame.BackgroundTransparency = 1
+        MainFrame.Visible = true
+        TweenService:Create(MainFrame, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+        
+        pcall(function()
+            StarterGui:SetCore("SendNotification", {
+                Title = "Ex00us1a GUI v2.5",
+                Text = "Можете успешно баловаться! 👁️👄👁️",
+                Icon = "rbxassetid://6031087856",
+                Duration = 5
+            })
+        end)
+        
+        print("Ex00us1a 👀 Gu1 v2.5 успешно загружен")
+    end)
+end)
