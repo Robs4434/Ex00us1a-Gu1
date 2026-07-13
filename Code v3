@@ -74,6 +74,7 @@ MainFrame.Visible = false
 MainFrame.ClipsDescendants = true
 MainFrame.Parent = ScreenGui
 
+-- === СИСТЕМА ПЕРЕТАСКИВАНИЯ ОКНА (DRAG) ===
 local dragToggle, dragStart, startPos
 local function updateInput(input)
     local delta = input.Position - dragStart
@@ -99,6 +100,88 @@ MainFrame.InputChanged:Connect(function(input)
         if dragToggle then updateInput(input) end
     end
 end)
+
+-- === СИСТЕМА ИЗМЕНЕНИЯ РАЗМЕРА ОКНА (RESIZE) ===
+local MIN_WIDTH, MIN_HEIGHT = 380, 280   -- Минимальный размер окна
+local MAX_WIDTH, MAX_HEIGHT = 1000, 800  -- Максимальный размер окна
+
+local ResizeRight = Instance.new("Frame")
+ResizeRight.Name = "ResizeRight"
+ResizeRight.Size = UDim2.new(0, 7, 1, -7)
+ResizeRight.Position = UDim2.new(1, -7, 0, 0)
+ResizeRight.BackgroundTransparency = 1
+ResizeRight.ZIndex = 10
+ResizeRight.Parent = MainFrame
+
+local ResizeBottom = Instance.new("Frame")
+ResizeBottom.Name = "ResizeBottom"
+ResizeBottom.Size = UDim2.new(1, -7, 0, 7)
+ResizeBottom.Position = UDim2.new(0, 0, 1, -7)
+ResizeBottom.BackgroundTransparency = 1
+ResizeBottom.ZIndex = 10
+ResizeBottom.Parent = MainFrame
+
+local ResizeCorner = Instance.new("Frame")
+ResizeCorner.Name = "ResizeCorner"
+ResizeCorner.Size = UDim2.new(0, 14, 0, 14)
+ResizeCorner.Position = UDim2.new(1, -14, 1, -14)
+ResizeCorner.BackgroundTransparency = 1
+ResizeCorner.ZIndex = 11
+ResizeCorner.Parent = MainFrame
+
+local resizeToggle = false
+local resizeType = ""
+local resizeStartSize = Vector2.new(0, 0)
+local resizeDragStart = Vector2.new(0, 0)
+
+local function startResize(input, rType)
+    resizeToggle = true
+    resizeType = rType
+    resizeDragStart = input.Position
+    resizeStartSize = Vector2.new(MainFrame.AbsoluteSize.X, MainFrame.AbsoluteSize.Y)
+    
+    input.Changed:Connect(function()
+        if input.UserInputState == Enum.UserInputState.End then
+            resizeToggle = false
+        end
+    end)
+end
+
+ResizeRight.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        startResize(input, "Right")
+    end
+end)
+
+ResizeBottom.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        startResize(input, "Bottom")
+    end
+end)
+
+ResizeCorner.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        startResize(input, "Corner")
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if resizeToggle and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - resizeDragStart
+        local newWidth = resizeStartSize.X
+        local newHeight = resizeStartSize.Y
+
+        if resizeType == "Right" or resizeType == "Corner" then
+            newWidth = math.clamp(resizeStartSize.X + delta.X, MIN_WIDTH, MAX_WIDTH)
+        end
+        if resizeType == "Bottom" or resizeType == "Corner" then
+            newHeight = math.clamp(resizeStartSize.Y + delta.Y, MIN_HEIGHT, MAX_HEIGHT)
+        end
+
+        MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+    end
+end)
+-- ===============================================
 
 local TitleBar = Instance.new("Frame")
 TitleBar.Size = UDim2.new(1, 0, 0, 35)
@@ -298,10 +381,10 @@ local function CreateSlider(text, min, max, default, tabParent, callback)
     end)
 end
 
-local TabMovement = CreateTab("M0v3M3nt", "🏃")
-local TabVisuals = CreateTab("V1sUa1s", "👁️")
-local TabMisc = CreateTab("M1sC", "⚙️")
-local TabSettings = CreateTab("S3tt1nGs", "🛠️")
+local TabMovement = CreateTab("Movement", "🏃")
+local TabVisuals = CreateTab("Visuals", "👁️")
+local TabMisc = CreateTab("Misc", "⚙️")
+local TabSettings = CreateTab("Settings", "🛠️")
 
 tabs["Movement"].Button.BackgroundColor3 = COLORS.Active
 tabs["Movement"].Frame.Visible = true
@@ -376,7 +459,7 @@ flyBtn = CreateHackButton("Fly Mode [OFF]", TabMovement, function()
             if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction = direction + cam.CFrame.LookVector end
             if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction = direction - cam.CFrame.LookVector end
             if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction = direction - cam.CFrame.RightVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction = direction + cam.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction = direction - cam.CFrame.RightVector end
             if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction = direction + Vector3.new(0, 1, 0) end
             if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then direction = direction - Vector3.new(0, 1, 0) end
 
@@ -640,7 +723,6 @@ cameraButton = CreateHackButton("Camera Tweak ❌", TabVisuals, function()
 end)
 LocalPlayer.CharacterRemoving:Connect(resetPreviousParts)
 
-
 local spinActive = false
 local spinSpeed = 50
 local spinBav = nil
@@ -671,33 +753,33 @@ end)
 
 local harakiriActive = false
 local trailButton = nil
-trailButton = CreateHackButton("HaRak1r1", TabMisc, function()
+trailButton = CreateHackButton("HaRak1r1 [OFF]", TabMisc, function()
     harakiriActive = not harakiriActive
     if harakiriActive then
-        trailButton.Text = "  > HaRak1r1"
-        coroutine.wrap(function()
-            while true do
-                local char = game.Players.LocalPlayer.Character
+        trailButton.Text = "  > HaRak1r1 [ON]"
+        task.spawn(function()
+            while harakiriActive do
+                local char = LocalPlayer.Character
                 local EB_foundChild = char and char:FindFirstChild("HumanoidRootPart")
-                if not EB_foundChild then task.wait() continue end
-                
-                local EB_created = Instance.new("Part")
-                EB_created.Parent = game:FindFirstChild('Workspace')
-                if EB_created then EB_created.Position = EB_foundChild.Position end
-                task.wait()
+                if EB_foundChild then
+                    local EB_created = Instance.new("Part")
+                    EB_created.Position = EB_foundChild.Position
+                    EB_created.Parent = workspace
+                end
+                task.wait(0.1)
             end
-        end)()
+        end)
     else
-        trailButton.Text = "  > HaRak1r1"
+        trailButton.Text = "  > HaRak1r1 [OFF]"
     end
 end)
 
 local trailActive2 = false
 local trailButton2 = nil
-trailButton2 = CreateHackButton("Brick Trail 💩", TabMisc, function()
+trailButton2 = CreateHackButton("Brick Trail [OFF]", TabMisc, function()
     trailActive2 = not trailActive2
     if trailActive2 then
-        trailButton2.Text = "  > Brick Trail 💩"
+        trailButton2.Text = "  > Brick Trail [ON]"
         task.spawn(function()
             while trailActive2 do
                 local character = LocalPlayer.Character
@@ -713,11 +795,11 @@ trailButton2 = CreateHackButton("Brick Trail 💩", TabMisc, function()
                     p.Color = COLORS.Accent
                     game:GetService("Debris"):AddItem(p, 3)
                 end
-                task.wait()
+                task.wait(0.1)
             end
         end)
     else
-        trailButton2.Text = "  > Brick Trail 💩"
+        trailButton2.Text = "  > Brick Trail [OFF]"
     end
 end)
 
@@ -739,6 +821,7 @@ teleportButton = CreateHackButton("Teleport Loop ❌", TabMisc, function()
     teleportBotActive = not teleportBotActive
     if teleportBotActive then teleportButton.Text = "  > Teleport Loop ✅" else teleportButton.Text = "  > Teleport Loop ❌" end
 end)
+
 task.spawn(function()
     while true do
         task.wait(0.5)
@@ -755,7 +838,8 @@ task.spawn(function()
                             local startTime = tick()
                             while teleportBotActive and (tick() - startTime) < 5.0 do
                                 if not p.Character or not targetRoot or targetHumanoid.Health <= 0 then break end
-                                myRoot.Velocity, myRoot.RotVelocity = Vector3.new(0,0,0), Vector3.new(0,0,0)
+                                myRoot.AssemblyLinearVelocity = Vector3.zero
+                                myRoot.AssemblyAngularVelocity = Vector3.zero
                                 LocalPlayer.Character:PivotTo(targetRoot.CFrame)
                                 task.wait(0.02)
                             end
@@ -766,6 +850,94 @@ task.spawn(function()
         end
     end
 end)
+
+-- === НОВЫЕ ФУНКЦИИ FLING И BANG (КАК В INFINITE YIELD) ===
+local flingActive = false
+local flingBtn = nil
+flingBtn = CreateHackButton("Fling Mode [OFF]", TabMisc, function()
+    flingActive = not flingActive
+    if flingActive then
+        flingBtn.Text = "  > Fling Mode [ON]"
+        flingBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        task.spawn(function()
+            while flingActive do
+                local char = LocalPlayer.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    if not hrp:FindFirstChild("FlingAV") then
+                        local bAV = Instance.new("BodyAngularVelocity")
+                        bAV.Name = "FlingAV"
+                        bAV.MaxTorque = Vector3.new(0, math.huge, 0)
+                        bAV.AngularVelocity = Vector3.new(0, 99999, 0)
+                        bAV.Parent = hrp
+                    end
+                    -- Генерируем массивную горизонтальную скорость для физического толчка (флинга)
+                    hrp.AssemblyLinearVelocity = Vector3.new(9999, 9999, 9999)
+                end
+                task.wait(0.01)
+            end
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp and hrp:FindFirstChild("FlingAV") then hrp.FlingAV:Destroy() end
+        end)
+    else
+        flingBtn.Text = "  > Fling Mode [OFF]"
+        flingBtn.TextColor3 = COLORS.Text
+    end
+end)
+
+local bangActive = false
+local bangBtn = nil
+local function getNearestPlayer()
+    local nearest = nil
+    local minDistance = math.huge
+    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (myRoot.Position - p.Character.HumanoidRootPart.Position).Magnitude
+            if dist < minDistance then
+                minDistance = dist
+                nearest = p
+            end
+        end
+    end
+    return nearest
+end
+
+bangBtn = CreateHackButton("Bang Mode [OFF]", TabMisc, function()
+    bangActive = not bangActive
+    if bangActive then
+        bangBtn.Text = "  > Bang Mode [ON]"
+        bangBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        task.spawn(function()
+            local toggleState = false
+            while bangActive do
+                local target = getNearestPlayer()
+                local myChar = LocalPlayer.Character
+                local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                local myHum = myChar and myChar:FindFirstChildOfClass("Humanoid")
+                
+                if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") and myRoot then
+                    if myHum then myHum.PlatformStand = true end
+                    toggleState = not toggleState
+                    -- Прикрепляемся сзади игрока и имитируем ритмичные движения за счет изменения офсета CFrame
+                    myRoot.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, toggleState and 1.2 or 2.2)
+                else
+                    if myHum then myHum.PlatformStand = false end
+                end
+                task.wait(0.05)
+            end
+            local myChar = LocalPlayer.Character
+            local myHum = myChar and myChar:FindFirstChildOfClass("Humanoid")
+            if myHum then myHum.PlatformStand = false end
+        end)
+    else
+        bangBtn.Text = "  > Bang Mode [OFF]"
+        bangBtn.TextColor3 = COLORS.Text
+    end
+end)
+-- =========================================================
 
 local skyChanged = false
 CreateHackButton("Und3r C0NNstruCt1ON 🚧", TabSettings, function()
@@ -801,17 +973,23 @@ end)
 
 local function CleanUp()
     teleportBotActive = false
+    harakiriActive = false
+    trailActive2 = false
+    flingActive = false
+    bangActive = false
     if flyConnection then flyConnection:Disconnect() end
     if noclipConnection then noclipConnection:Disconnect() end
     if infJumpConnection then infJumpConnection:Disconnect() end
     if spinBav then spinBav:Destroy() end
     local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    if hrp and hrp:FindFirstChild("SpinBAV") then hrp.SpinBAV:Destroy() end
+    if hrp then
+        if hrp:FindFirstChild("SpinBAV") then hrp.SpinBAV:Destroy() end
+        if hrp:FindFirstChild("FlingAV") then hrp.FlingAV:Destroy() end
+    end
     ScreenGui:Destroy()
 end
 CloseButton.MouseButton1Click:Connect(CleanUp)
 CreateHackButton("Destroy GUI 🗑️", TabSettings, function() CleanUp() end)
-
 
 task.spawn(function()
     LoadingStatus.Text = "Загрузка модулей..."
