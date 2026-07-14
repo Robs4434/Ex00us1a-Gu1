@@ -397,7 +397,7 @@ noclipBtn = CreateHackButton("NoClip Mode [OFF]", TabMovement, function()
     noclipActive = not noclipActive
     if noclipActive then
         noclipBtn.Text = "  > NoClip Mode [ON]"
-        noclipBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        noclipBtn.TextColor3 = COLORS.Text
         noclipConnection = RunService.Stepped:Connect(function()
             local character = LocalPlayer.Character
             if character then
@@ -435,15 +435,19 @@ flyBtn = CreateHackButton("Fly Mode [OFF]", TabMovement, function()
     if flyActive then
         flyBtn.Text = "  > Fly Mode [ON]"
         if humanoid then humanoid.PlatformStand = true end
+        
+        -- === НАСТРОЙКИ РЕЗКОСТИ ПОЛЕТА ===
         local bv = Instance.new("BodyVelocity")
         bv.Name = "FlyBV"
-        bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge) -- Бесконечная сила тяги
+        bv.P = 100000 -- Максимальная мощность (убирает инерцию)
         bv.Velocity = Vector3.new(0, 0, 0)
         bv.Parent = hrp
 
         local bg = Instance.new("BodyGyro")
         bg.Name = "FlyBG"
-        bg.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+        bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge) -- Бесконечная сила поворота
+        bg.P = 100000 -- Мгновенный отклик на поворот камеры
         bg.CFrame = hrp.CFrame
         bg.Parent = hrp
 
@@ -459,7 +463,8 @@ flyBtn = CreateHackButton("Fly Mode [OFF]", TabMovement, function()
             if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction = direction + cam.CFrame.LookVector end
             if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction = direction - cam.CFrame.LookVector end
             if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction = direction - cam.CFrame.RightVector end
-            if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction = direction - cam.CFrame.RightVector end
+            -- ИСПРАВЛЕНО: Теперь кнопка D прибавляет вектор вправо, а не отнимает его
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction = direction + cam.CFrame.RightVector end
             if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction = direction + Vector3.new(0, 1, 0) end
             if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then direction = direction - Vector3.new(0, 1, 0) end
 
@@ -531,7 +536,7 @@ noFogButton = CreateHackButton("No Fog 🌫️ ❌", TabVisuals, function()
     noFogActive = not noFogActive
     if noFogActive then
         noFogButton.Text = "  > No Fog 🌫️ ✅"
-        noFogButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        noFogButton.TextColor3 = COLORS.Text
         originalFogValues.FogStart = Lighting.FogStart
         originalFogValues.FogEnd = Lighting.FogEnd
         Lighting.FogStart = 999999
@@ -858,7 +863,7 @@ flingBtn = CreateHackButton("Fling Mode [OFF]", TabMisc, function()
     flingActive = not flingActive
     if flingActive then
         flingBtn.Text = "  > Fling Mode [ON]"
-        flingBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        flingBtn.TextColor3 = COLORS.Text
         task.spawn(function()
             while flingActive do
                 local char = LocalPlayer.Character
@@ -909,7 +914,7 @@ bangBtn = CreateHackButton("Bang Mode [OFF]", TabMisc, function()
     bangActive = not bangActive
     if bangActive then
         bangBtn.Text = "  > Bang Mode [ON]"
-        bangBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        bangBtn.TextColor3 = COLORS.Text
         task.spawn(function()
             local toggleState = false
             while bangActive do
@@ -1036,4 +1041,15 @@ task.spawn(function()
             })
         end)
     end)
+end)
+
+-- === ВАШ ДОБАВЛЕННЫЙ КОД (СРАБАТЫВАЕТ ПРИ ЗАПУСКЕ) ===
+task.spawn(function()
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local head = character:WaitForChild("Head", 5)
+    if head then
+        pcall(function()
+            game:GetService("Chat"):Chat(head, "Пу-пу-пу")
+        end)
+    end
 end)
