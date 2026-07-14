@@ -1,0 +1,925 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "Ex00us1a 👀 Gu1 v3.5"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local COLORS = {
+    Background = Color3.fromRGB(15, 15, 15),
+    Panel = Color3.fromRGB(20, 20, 20),
+    Accent = Color3.fromRGB(0, 255, 50),
+    Hover = Color3.fromRGB(0, 80, 15),
+    Active = Color3.fromRGB(0, 60, 10),
+    Text = Color3.fromRGB(0, 255, 50),
+    TextMuted = Color3.fromRGB(150, 150, 150)
+}
+
+local LoadingFrame = Instance.new("Frame")
+LoadingFrame.Name = "LoadingFrame"
+LoadingFrame.Size = UDim2.new(0, 300, 0, 120)
+LoadingFrame.Position = UDim2.new(0.5, -150, 0.5, -60)
+LoadingFrame.BackgroundColor3 = COLORS.Background
+LoadingFrame.BorderColor3 = COLORS.Accent
+LoadingFrame.BorderSizePixel = 2
+LoadingFrame.Parent = ScreenGui
+
+local LoadingTitle = Instance.new("TextLabel")
+LoadingTitle.Size = UDim2.new(1, 0, 0, 40)
+LoadingTitle.BackgroundTransparency = 1
+LoadingTitle.Text = "Ex00us1a 👀 Gu1"
+LoadingTitle.TextColor3 = COLORS.Text
+LoadingTitle.TextSize = 22
+LoadingTitle.Font = Enum.Font.Code
+LoadingTitle.Parent = LoadingFrame
+
+local LoadingStatus = Instance.new("TextLabel")
+LoadingStatus.Size = UDim2.new(1, 0, 0, 20)
+LoadingStatus.Position = UDim2.new(0, 0, 0, 45)
+LoadingStatus.BackgroundTransparency = 1
+LoadingStatus.Text = "Инициализация..."
+LoadingStatus.TextColor3 = COLORS.TextMuted
+LoadingStatus.TextSize = 14
+LoadingStatus.Font = Enum.Font.Code
+LoadingStatus.Parent = LoadingFrame
+
+local BarBg = Instance.new("Frame")
+BarBg.Size = UDim2.new(0.9, 0, 0, 12)
+BarBg.Position = UDim2.new(0.05, 0, 0, 85)
+BarBg.BackgroundColor3 = COLORS.Panel
+BarBg.BorderSizePixel = 1
+BarBg.BorderColor3 = COLORS.Accent
+BarBg.Parent = LoadingFrame
+
+local BarFill = Instance.new("Frame")
+BarFill.Size = UDim2.new(0, 0, 1, 0)
+BarFill.BackgroundColor3 = COLORS.Accent
+BarFill.BorderSizePixel = 0
+BarFill.Parent = BarBg
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 480, 0, 360)
+MainFrame.Position = UDim2.new(0.5, -240, 0.5, -180)
+MainFrame.BackgroundColor3 = COLORS.Background
+MainFrame.BorderColor3 = COLORS.Accent
+MainFrame.BorderSizePixel = 2
+MainFrame.Active = true
+MainFrame.Visible = false
+MainFrame.ClipsDescendants = true
+MainFrame.Parent = ScreenGui
+
+local dragToggle, dragStart, startPos
+local function updateInput(input)
+    local delta = input.Position - dragStart
+    local position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    MainFrame.Position = position
+end
+
+MainFrame.InputBegan:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) and input.Position.Y <= MainFrame.AbsolutePosition.Y + 35 then
+        dragToggle = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragToggle = false
+            end
+        end)
+    end
+end)
+
+MainFrame.InputChanged:Connect(function(input)
+    if (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        if dragToggle then updateInput(input) end
+    end
+end)
+
+local MIN_WIDTH, MIN_HEIGHT = 380, 280
+local MAX_WIDTH, MAX_HEIGHT = 1000, 800
+
+local ResizeRight = Instance.new("Frame")
+ResizeRight.Name = "ResizeRight"
+ResizeRight.Size = UDim2.new(0, 7, 1, -7)
+ResizeRight.Position = UDim2.new(1, -7, 0, 0)
+ResizeRight.BackgroundTransparency = 1
+ResizeRight.ZIndex = 10
+ResizeRight.Parent = MainFrame
+
+local ResizeBottom = Instance.new("Frame")
+ResizeBottom.Name = "ResizeBottom"
+ResizeBottom.Size = UDim2.new(1, -7, 0, 7)
+ResizeBottom.Position = UDim2.new(0, 0, 1, -7)
+ResizeBottom.BackgroundTransparency = 1
+ResizeBottom.ZIndex = 10
+ResizeBottom.Parent = MainFrame
+
+local ResizeCorner = Instance.new("Frame")
+ResizeCorner.Name = "ResizeCorner"
+ResizeCorner.Size = UDim2.new(0, 14, 0, 14)
+ResizeCorner.Position = UDim2.new(1, -14, 1, -14)
+ResizeCorner.BackgroundTransparency = 1
+ResizeCorner.ZIndex = 11
+ResizeCorner.Parent = MainFrame
+
+local resizeToggle = false
+local resizeType = ""
+local resizeStartSize = Vector2.new(0, 0)
+local resizeDragStart = Vector2.new(0, 0)
+
+local function startResize(input, rType)
+    resizeToggle = true
+    resizeType = rType
+    resizeDragStart = input.Position
+    resizeStartSize = Vector2.new(MainFrame.AbsoluteSize.X, MainFrame.AbsoluteSize.Y)
+    
+    input.Changed:Connect(function()
+        if input.UserInputState == Enum.UserInputState.End then
+            resizeToggle = false
+        end
+    end)
+end
+
+ResizeRight.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then startResize(input, "Right") end
+end)
+ResizeBottom.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then startResize(input, "Bottom") end
+end)
+ResizeCorner.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then startResize(input, "Corner") end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if resizeToggle and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - resizeDragStart
+        local newWidth, newHeight = resizeStartSize.X, resizeStartSize.Y
+        if resizeType == "Right" or resizeType == "Corner" then newWidth = math.clamp(resizeStartSize.X + delta.X, MIN_WIDTH, MAX_WIDTH) end
+        if resizeType == "Bottom" or resizeType == "Corner" then newHeight = math.clamp(resizeStartSize.Y + delta.Y, MIN_HEIGHT, MAX_HEIGHT) end
+        MainFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+    end
+end)
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 35)
+TitleBar.BackgroundColor3 = COLORS.Panel
+TitleBar.BorderColor3 = COLORS.Accent
+TitleBar.BorderSizePixel = 1
+TitleBar.Parent = MainFrame
+
+local TitleText = Instance.new("TextLabel")
+TitleText.Size = UDim2.new(1, -40, 1, 0)
+TitleText.Position = UDim2.new(0, 10, 0, 0)
+TitleText.BackgroundTransparency = 1
+TitleText.Text = "Ex00us1a 👀 Gu1 v3.5 | PatPat Edition"
+TitleText.TextColor3 = COLORS.Text
+TitleText.TextSize = 16
+TitleText.TextXAlignment = Enum.TextXAlignment.Left
+TitleText.Font = Enum.Font.Code
+TitleText.Parent = TitleBar
+
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 35, 0, 35)
+CloseButton.Position = UDim2.new(1, -35, 0, 0)
+CloseButton.BackgroundColor3 = COLORS.Panel
+CloseButton.BorderSizePixel = 0
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 50, 50)
+CloseButton.TextSize = 18
+CloseButton.Font = Enum.Font.Code
+CloseButton.Parent = TitleBar
+
+CloseButton.MouseEnter:Connect(function() TweenService:Create(CloseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(100, 20, 20)}):Play() end)
+CloseButton.MouseLeave:Connect(function() TweenService:Create(CloseButton, TweenInfo.new(0.2), {BackgroundColor3 = COLORS.Panel}):Play() end)
+
+local Sidebar = Instance.new("Frame")
+Sidebar.Size = UDim2.new(0, 130, 1, -35)
+Sidebar.Position = UDim2.new(0, 0, 0, 35)
+Sidebar.BackgroundColor3 = COLORS.Panel
+Sidebar.BorderColor3 = COLORS.Accent
+Sidebar.BorderSizePixel = 1
+Sidebar.Parent = MainFrame
+
+local SidebarLayout = Instance.new("UIListLayout")
+SidebarLayout.Padding = UDim.new(0, 5)
+SidebarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+SidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
+SidebarLayout.Parent = Sidebar
+
+local Spacer = Instance.new("Frame")
+Spacer.Size = UDim2.new(1, 0, 0, 2)
+Spacer.BackgroundTransparency = 1
+Spacer.Parent = Sidebar
+
+local ContentArea = Instance.new("Frame")
+ContentArea.Size = UDim2.new(1, -131, 1, -35)
+ContentArea.Position = UDim2.new(0, 131, 0, 35)
+ContentArea.BackgroundTransparency = 1
+ContentArea.ClipsDescendants = true
+ContentArea.Parent = MainFrame
+
+local tabs = {}
+local currentTab = nil
+
+local function CreateTab(name, icon)
+    local tabBtn = Instance.new("TextButton")
+    tabBtn.Size = UDim2.new(0.9, 0, 0, 35)
+    tabBtn.BackgroundColor3 = COLORS.Background
+    tabBtn.BorderColor3 = COLORS.Accent
+    tabBtn.BorderSizePixel = 1
+    tabBtn.Text = icon .. " " .. name
+    tabBtn.TextColor3 = COLORS.Text
+    tabBtn.Font = Enum.Font.Code
+    tabBtn.TextSize = 14
+    tabBtn.Parent = Sidebar
+
+    local scrollFrame = Instance.new("ScrollingFrame")
+    scrollFrame.Size = UDim2.new(1, -10, 1, -10)
+    scrollFrame.Position = UDim2.new(0, 5, 0, 5)
+    scrollFrame.BackgroundTransparency = 1
+    scrollFrame.ScrollBarThickness = 4
+    scrollFrame.ScrollBarImageColor3 = COLORS.Accent
+    scrollFrame.Visible = false
+    scrollFrame.Parent = ContentArea
+    
+    local UIListLayout = Instance.new("UIListLayout")
+    UIListLayout.Padding = UDim.new(0, 8)
+    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    UIListLayout.Parent = scrollFrame
+    
+    UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        scrollFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 10)
+    end)
+
+    tabs[name] = {Button = tabBtn, Frame = scrollFrame}
+
+    tabBtn.MouseButton1Click:Connect(function()
+        if currentTab == name then return end
+        if currentTab and tabs[currentTab] then
+            TweenService:Create(tabs[currentTab].Button, TweenInfo.new(0.2), {BackgroundColor3 = COLORS.Background}):Play()
+            tabs[currentTab].Frame.Visible = false
+        end
+        currentTab = name
+        TweenService:Create(tabBtn, TweenInfo.new(0.2), {BackgroundColor3 = COLORS.Active}):Play()
+        scrollFrame.Position = UDim2.new(0, -20, 0, 5)
+        scrollFrame.Visible = true
+        TweenService:Create(scrollFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0, 5, 0, 5)}):Play()
+    end)
+
+    return scrollFrame
+end
+
+local function CreateHackButton(text, tabParent, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -5, 0, 40)
+    btn.BackgroundColor3 = COLORS.Panel
+    btn.BorderColor3 = COLORS.Accent
+    btn.BorderSizePixel = 1
+    btn.Text = "  > " .. text
+    btn.TextColor3 = COLORS.Text
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+    btn.Font = Enum.Font.Code
+    btn.TextSize = 14
+    btn.Parent = tabParent
+
+    btn.MouseEnter:Connect(function() TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = COLORS.Hover}):Play() end)
+    btn.MouseLeave:Connect(function() TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = COLORS.Panel}):Play() end)
+    btn.MouseButton1Down:Connect(function() TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(1, -8, 0, 38)}):Play() end)
+    btn.MouseButton1Up:Connect(function() TweenService:Create(btn, TweenInfo.new(0.1), {Size = UDim2.new(1, -5, 0, 40)}):Play() end)
+    
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+local function CreateSlider(text, min, max, default, tabParent, callback)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(1, -5, 0, 50)
+    container.BackgroundColor3 = COLORS.Panel
+    container.BorderColor3 = COLORS.Accent
+    container.BorderSizePixel = 1
+    container.Parent = tabParent
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -10, 0, 20)
+    label.Position = UDim2.new(0, 5, 0, 2)
+    label.BackgroundTransparency = 1
+    label.Text = text .. ": " .. tostring(default)
+    label.TextColor3 = COLORS.Text
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Font = Enum.Font.Code
+    label.TextSize = 12
+    label.Parent = container
+
+    local sliderBg = Instance.new("Frame")
+    sliderBg.Size = UDim2.new(1, -20, 0, 10)
+    sliderBg.Position = UDim2.new(0, 10, 0, 30)
+    sliderBg.BackgroundColor3 = COLORS.Background
+    sliderBg.BorderColor3 = COLORS.Accent
+    sliderBg.BorderSizePixel = 1
+    sliderBg.Parent = container
+
+    local sliderFill = Instance.new("Frame")
+    sliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    sliderFill.BackgroundColor3 = COLORS.Accent
+    sliderFill.BorderSizePixel = 0
+    sliderFill.Parent = sliderBg
+
+    local sliderBtn = Instance.new("TextButton")
+    sliderBtn.Size = UDim2.new(0, 12, 0, 20)
+    sliderBtn.Position = UDim2.new((default - min) / (max - min), -6, 0.5, -10)
+    sliderBtn.BackgroundColor3 = COLORS.Text
+    sliderBtn.BorderSizePixel = 0
+    sliderBtn.Text = ""
+    sliderBtn.Parent = sliderBg
+
+    local dragging = false
+    local function updateSlider(input)
+        local posX = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
+        TweenService:Create(sliderBtn, TweenInfo.new(0.05), {Position = UDim2.new(posX, -6, 0.5, -10)}):Play()
+        TweenService:Create(sliderFill, TweenInfo.new(0.05), {Size = UDim2.new(posX, 0, 1, 0)}):Play()
+        local val = math.floor(min + (max - min) * posX)
+        label.Text = text .. ": " .. tostring(val)
+        callback(val)
+    end
+
+    sliderBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then updateSlider(input) end
+    end)
+end
+
+local TabMovement = CreateTab("Movement", "🏃")
+local TabVisuals = CreateTab("Visuals", "👁️")
+local TabMisc = CreateTab("Misc", "⚙️")
+local TabSettings = CreateTab("Settings", "🛠️")
+
+tabs["Movement"].Button.BackgroundColor3 = COLORS.Active
+tabs["Movement"].Frame.Visible = true
+currentTab = "Movement"
+
+-- === Вкладка Movement ===
+local noclipConnection, noclipActive, noclipBtn = nil, false, nil
+noclipBtn = CreateHackButton("NoClip Mode [OFF]", TabMovement, function()
+    noclipActive = not noclipActive
+    if noclipActive then
+        noclipBtn.Text = "  > NoClip Mode [ON]"
+        noclipConnection = RunService.Stepped:Connect(function()
+            local character = LocalPlayer.Character
+            if character then
+                for _, child in pairs(character:GetDescendants()) do
+                    if child:IsA("BasePart") and child.CanCollide then
+                        child.CanCollide = false
+                    end
+                end
+            end
+        end)
+    else
+        noclipBtn.Text = "  > NoClip Mode [OFF]"
+        if noclipConnection then 
+            noclipConnection:Disconnect() 
+            noclipConnection = nil 
+        end
+        
+        local character = LocalPlayer.Character
+        if character then
+            local coreParts = {"HumanoidRootPart", "Torso", "UpperTorso", "LowerTorso", "Head"}
+            for _, partName in ipairs(coreParts) do
+                local part = character:FindFirstChild(partName)
+                if part and part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+    end
+end)
+
+local flyActive, flyConnection, flySpeed, flyBtn = false, nil, 50, nil
+flyBtn = CreateHackButton("Fly Mode [OFF]", TabMovement, function()
+    flyActive = not flyActive
+    local character = LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    local hrp, humanoid = character.HumanoidRootPart, character:FindFirstChildOfClass("Humanoid")
+    if flyActive then
+        flyBtn.Text = "  > Fly Mode [ON]"
+        if humanoid then humanoid.PlatformStand = true end
+        local bv = Instance.new("BodyVelocity")
+        bv.Name, bv.MaxForce, bv.P, bv.Velocity, bv.Parent = "FlyBV", Vector3.new(math.huge, math.huge, math.huge), 100000, Vector3.new(0, 0, 0), hrp
+        local bg = Instance.new("BodyGyro")
+        bg.Name, bg.MaxTorque, bg.P, bg.CFrame, bg.Parent = "FlyBG", Vector3.new(math.huge, math.huge, math.huge), 100000, hrp.CFrame, hrp
+        flyConnection = RunService.RenderStepped:Connect(function()
+            local cam = workspace.CurrentCamera
+            if not hrp or not hrp.Parent then return end
+            local currentBV, currentBG = hrp:FindFirstChild("FlyBV"), hrp:FindFirstChild("FlyBG")
+            if not currentBV or not currentBG then return end
+            local direction = Vector3.new(0, 0, 0)
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then direction = direction + cam.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then direction = direction - cam.CFrame.LookVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then direction = direction - cam.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then direction = direction + cam.CFrame.RightVector end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then direction = direction + Vector3.new(0, 1, 0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then direction = direction - Vector3.new(0, 1, 0) end
+            currentBG.CFrame = cam.CFrame
+            if direction.Magnitude > 0 then currentBV.Velocity = direction.Unit * flySpeed else currentBV.Velocity = Vector3.new(0, 0, 0) end
+        end)
+    else
+        flyBtn.Text = "  > Fly Mode [OFF]"
+        if flyConnection then flyConnection:Disconnect() flyConnection = nil end
+        if hrp:FindFirstChild("FlyBV") then hrp.FlyBV:Destroy() end
+        if hrp:FindFirstChild("FlyBG") then hrp.FlyBG:Destroy() end
+        if humanoid then humanoid.PlatformStand = false end
+    end
+end)
+
+local infJumpEnabled, infJumpConnection, infJumpBtn = false, nil, nil
+infJumpBtn = CreateHackButton("Inf Jump [OFF]", TabMovement, function()
+    infJumpEnabled = not infJumpEnabled
+    if infJumpEnabled then
+        infJumpBtn.Text = "  > Inf Jump [ON]"
+        if not infJumpConnection then
+            infJumpConnection = UserInputService.JumpRequest:Connect(function()
+                if infJumpEnabled then
+                    local character = LocalPlayer.Character
+                    if character and character:FindFirstChildOfClass("Humanoid") then character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping") end
+                end
+            end)
+        end
+    else
+        infJumpBtn.Text = "  > Inf Jump [OFF]"
+        if infJumpConnection then infJumpConnection:Disconnect() infJumpConnection = nil end
+    end
+end)
+
+local currentSpeed = 16
+RunService.Heartbeat:Connect(function()
+    local character = LocalPlayer.Character
+    if character and character:FindFirstChildOfClass("Humanoid") then character:FindFirstChildOfClass("Humanoid").WalkSpeed = currentSpeed end
+end)
+CreateSlider("Walk Speed", 16, 300, 16, TabMovement, function(value) currentSpeed = value end)
+
+local currentJump = 50
+RunService.Heartbeat:Connect(function()
+    local character = LocalPlayer.Character
+    if character and character:FindFirstChildOfClass("Humanoid") then
+        local hum = character:FindFirstChildOfClass("Humanoid")
+        hum.UseJumpPower, hum.JumpPower = true, currentJump
+    end
+end)
+CreateSlider("Jump Power", 50, 350, 50, TabMovement, function(value) currentJump = value end)
+CreateSlider("Fly Speed", 50, 500, 50, TabMovement, function(value) flySpeed = value end)
+
+-- === Вкладка Visuals ===
+local Lighting = game:GetService("Lighting")
+local noFogActive, noFogButton, originalFogValues = false, nil, {}
+noFogButton = CreateHackButton("No Fog 🌫️ ❌", TabVisuals, function()
+    noFogActive = not noFogActive
+    if noFogActive then
+        noFogButton.Text = "  > No Fog 🌫️ ✅"
+        originalFogValues.FogStart, originalFogValues.FogEnd = Lighting.FogStart, Lighting.FogEnd
+        Lighting.FogStart, Lighting.FogEnd = 999999, 999999
+        local atmos = Lighting:FindFirstChildOfClass("Atmosphere")
+        if atmos then originalFogValues.AtmosDensity = atmos.Density; atmos.Density = 0 end
+    else
+        noFogButton.Text = "  > No Fog 🌫️ ❌"
+        Lighting.FogStart = originalFogValues.FogStart or 0
+        Lighting.FogEnd = originalFogValues.FogEnd or 100000
+        local atmos = Lighting:FindFirstChildOfClass("Atmosphere")
+        if atmos and originalFogValues.AtmosDensity then atmos.Density = originalFogValues.AtmosDensity end
+    end
+end)
+
+local fbActive, fbButton, fbConnection = false, nil, nil
+local function applyFullBright() Lighting.Ambient, Lighting.OutdoorAmbient, Lighting.Brightness, Lighting.ClockTime, Lighting.GlobalShadows = Color3.fromRGB(255, 255, 255), Color3.fromRGB(255, 255, 255), 2, 14, false end
+fbButton = CreateHackButton("Full Bright ☀️ ❌", TabVisuals, function()
+    fbActive = not fbActive
+    if fbActive then
+        fbButton.Text = "  > Full Bright ☀️ ✅"
+        applyFullBright()
+        fbConnection = Lighting.Changed:Connect(function() if fbActive then applyFullBright() end end)
+    else
+        fbButton.Text = "  > Full Bright ☀️ ❌"
+        if fbConnection then fbConnection:Disconnect() fbConnection = nil end
+        Lighting.Ambient, Lighting.OutdoorAmbient, Lighting.Brightness, Lighting.ClockTime, Lighting.GlobalShadows = Color3.fromRGB(128, 128, 128), Color3.fromRGB(128, 128, 128), 1, 12, true
+    end
+end)
+
+local espActive, espButton, espConnections = false, nil, {}
+local function applyESP(player)
+    if player == LocalPlayer then return end
+    local function setupHighlight(character)
+        if not espActive then return end
+        if character:FindFirstChild("MyPlayerESP") then character.MyPlayerESP:Destroy() end
+        local highlight = Instance.new("Highlight")
+        highlight.Name, highlight.FillColor, highlight.FillTransparency, highlight.OutlineColor, highlight.OutlineTransparency, highlight.DepthMode, highlight.Parent = "MyPlayerESP", Color3.fromRGB(0, 255, 0), 0.5, Color3.fromRGB(0, 255, 0), 0, Enum.HighlightDepthMode.AlwaysOnTop, character
+    end
+    if player.Character then setupHighlight(player.Character) end
+    table.insert(espConnections, player.CharacterAdded:Connect(setupHighlight))
+end
+espButton = CreateHackButton("Player ESP 👥 ❌", TabVisuals, function()
+    espActive = not espActive
+    if espActive then
+        espButton.Text = "  > Player ESP 👥 ✅"
+        for _, p in pairs(Players:GetPlayers()) do applyESP(p) end
+        table.insert(espConnections, Players.PlayerAdded:Connect(applyESP))
+    else
+        espButton.Text = "  > Player ESP 👥 ❌"
+        for _, c in pairs(espConnections) do if c then c:Disconnect() end end
+        table.clear(espConnections)
+        for _, p in pairs(Players:GetPlayers()) do if p.Character and p.Character:FindFirstChild("MyPlayerESP") then p.Character.MyPlayerESP:Destroy() end end
+    end
+end)
+Players.PlayerRemoving:Connect(function(player) if player.Character and player.Character:FindFirstChild("MyPlayerESP") then player.Character.MyPlayerESP:Destroy() end end)
+
+local maxZoom, minZoom, XRAY_TRANSPARENCY, MAX_RAY_DISTANCE, hiddenParts, cameraActive, cameraButton = 1000, 0.5, 0.5, 1000, {}, false, nil
+local function resetPreviousParts()
+    for part, origTrans in pairs(hiddenParts) do if part and part.Parent then part.Transparency = origTrans end end
+    table.clear(hiddenParts)
+end
+cameraButton = CreateHackButton("Camera Tweak ❌", TabVisuals, function()
+    cameraActive = not cameraActive
+    local camera = workspace.CurrentCamera
+    if cameraActive then
+        cameraButton.Text = "  > Camera Tweak ✅"
+        camera.CameraType, LocalPlayer.CameraMaxZoomDistance, LocalPlayer.CameraMinZoomDistance = Enum.CameraType.Custom, maxZoom, minZoom
+        RunService:BindToRenderStep("ForsakenCameraPositionFix", Enum.RenderPriority.Camera.Value + 1, function()
+            local char = LocalPlayer.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if not root or not camera then return end
+            local zoom = (camera.CFrame.Position - root.Position).Magnitude
+            if zoom <= 2 then return end 
+            local look = camera.CFrame.LookVector
+            local targetPos = root.Position - (look * zoom) + Vector3.new(0, 2, 0)
+            camera.CFrame = CFrame.new(targetPos, targetPos + look)
+        end)
+        RunService:BindToRenderStep("ForsakenCameraXRayFix", Enum.RenderPriority.Camera.Value + 2, function()
+            local char = LocalPlayer.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if not root or not camera then resetPreviousParts() return end
+            local zoom = (camera.CFrame.Position - root.Position).Magnitude
+            if zoom <= 2 then resetPreviousParts() return end
+            local params = RaycastParams.new()
+            params.FilterType, params.FilterDescendantsInstances, params.IgnoreWater = Enum.RaycastFilterType.Exclude, {char}, true
+            local origin = root.Position + Vector3.new(0, 2, 0)
+            local dest = camera.CFrame.Position
+            local dir = dest - origin
+            if dir.Magnitude > MAX_RAY_DISTANCE then dir = dir.Unit * MAX_RAY_DISTANCE; dest = origin + dir end
+            local currentObstacles, currOrigin, currDir = {}, origin, dir
+            for i = 1, 10 do
+                local hit = workspace:Raycast(currOrigin, currDir, params)
+                if hit and hit.Instance then
+                    local part = hit.Instance
+                    if part:IsA("BasePart") and part.CanCollide and part.Name ~= "Terrain" then
+                        if not (part.Size.X > 80 or part.Size.Y > 80 or part.Size.Z > 80) and part.Transparency < 0.9 then
+                            currentObstacles[part] = true
+                            if not hiddenParts[part] then hiddenParts[part] = part.Transparency end
+                            part.Transparency = XRAY_TRANSPARENCY
+                        end
+                    end
+                    currOrigin = hit.Position + (dir.Unit * 0.1); currDir = dest - currOrigin
+                    if currDir.Magnitude < 0.5 then break end
+                else break end
+            end
+            for part, origTrans in pairs(hiddenParts) do
+                if not currentObstacles[part] then
+                    if part and part.Parent then part.Transparency = origTrans end
+                    hiddenParts[part] = nil
+                end
+            end
+        end)
+    else
+        cameraButton.Text = "  > Camera Tweak ❌"
+        RunService:UnbindFromRenderStep("ForsakenCameraPositionFix"); RunService:UnbindFromRenderStep("ForsakenCameraXRayFix")
+        resetPreviousParts(); LocalPlayer.CameraMaxZoomDistance, LocalPlayer.CameraMinZoomDistance = 400, 0.5
+    end
+end)
+LocalPlayer.CharacterRemoving:Connect(resetPreviousParts)
+
+local spinActive, spinSpeed, spinBav, spinBtn = false, 50, nil, nil
+spinBtn = CreateHackButton("Spin Mode [OFF]", TabMisc, function()
+    spinActive = not spinActive
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = char.HumanoidRootPart
+    if spinActive then
+        spinBtn.Text = "  > Spin Mode [ON]"
+        if hrp:FindFirstChild("SpinBAV") then hrp.SpinBAV:Destroy() end
+        spinBav = Instance.new("BodyAngularVelocity")
+        spinBav.Name, spinBav.MaxTorque, spinBav.AngularVelocity, spinBav.Parent = "SpinBAV", Vector3.new(0, math.huge, 0), Vector3.new(0, spinSpeed, 0), hrp
+    else
+        spinBtn.Text = "  > Spin Mode [OFF]"
+        if spinBav then spinBav:Destroy() spinBav = nil end
+        if hrp:FindFirstChild("SpinBAV") then hrp.SpinBAV:Destroy() end
+    end
+end)
+CreateSlider("Spin Speed", 10, 500, 50, TabMisc, function(val) spinSpeed = val; if spinActive and spinBav then spinBav.AngularVelocity = Vector3.new(0, spinSpeed, 0) end end)
+
+local harakiriActive, trailButton = false, nil
+trailButton = CreateHackButton("HaRak1r1 [OFF]", TabMisc, function()
+    harakiriActive = not harakiriActive
+    if harakiriActive then
+        trailButton.Text = "  > HaRak1r1 [ON]"
+        task.spawn(function()
+            while harakiriActive do
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local p = Instance.new("Part"); p.Position = char.HumanoidRootPart.Position; p.Parent = workspace
+                end
+                task.wait(0.01)
+            end
+        end)
+    else trailButton.Text = "  > HaRak1r1 [OFF]" end
+end)
+
+local trailActive2, trailButton2 = false, nil
+trailButton2 = CreateHackButton("Brick Trail [OFF]", TabMisc, function()
+    trailActive2 = not trailActive2
+    if trailActive2 then
+        trailButton2.Text = "  > Brick Trail [ON]"
+        task.spawn(function()
+            local lastPos = nil
+            while trailActive2 do
+                local char = LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local hrpPos = char.HumanoidRootPart.Position - Vector3.new(0, 3, 0) -- Чуть ниже ног
+                    
+                    -- Создаем деталь, только если отошли на 2 студа от последней
+                    if not lastPos or (lastPos - hrpPos).Magnitude > 0.001 then
+                        local p = Instance.new("Part")
+                        p.Parent = workspace
+                        p.Position = hrpPos
+                        p.Anchored = true
+                        p.CanCollide = false
+                        p.Size = Vector3.new(2, 0.5, 2)
+                        p.Material = Enum.Material.Neon
+                        p.Color = COLORS.Accent
+                        game:GetService("Debris"):AddItem(p, 3)
+                        lastPos = hrpPos
+                    end
+                end
+                task.wait(0.001) 
+            end
+        end)
+    else 
+        trailButton2.Text = "  > Brick Trail [OFF]" 
+    end
+end)
+
+local iyExecuted, iyButton = false, nil
+iyButton = CreateHackButton("Infinite Yield 🌀", TabMisc, function()
+    if not iyExecuted then
+        iyExecuted = true; iyButton.Text = "  > Loaded!"
+        task.spawn(function() pcall(function() loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))() end) end)
+    end
+end)
+
+local teleportBotActive, teleportButton = false, nil
+teleportButton = CreateHackButton("Teleport Loop ❌", TabMisc, function()
+    teleportBotActive = not teleportBotActive
+    if teleportBotActive then teleportButton.Text = "  > Teleport Loop ✅" else teleportButton.Text = "  > Teleport Loop ❌" end
+end)
+task.spawn(function()
+    while true do
+        task.wait(0.5)
+        if teleportBotActive and LocalPlayer.Character then
+            local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            local myHum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if myRoot and myHum and myHum.Health > 0 then
+                for _, p in pairs(Players:GetPlayers()) do
+                    if not teleportBotActive then break end
+                    if p ~= LocalPlayer and p.Character then
+                        local tRoot = p.Character:FindFirstChild("HumanoidRootPart")
+                        local tHum = p.Character:FindFirstChildOfClass("Humanoid")
+                        if tRoot and tHum and tHum.Health > 0 then
+                            local st = tick()
+                            while teleportBotActive and (tick() - st) < 5.0 do
+                                if not p.Character or not tRoot or tHum.Health <= 0 then break end
+                                myRoot.AssemblyLinearVelocity, myRoot.AssemblyAngularVelocity = Vector3.zero, Vector3.zero
+                                LocalPlayer.Character:PivotTo(tRoot.CFrame)
+                                task.wait(0.02)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+local flingActive, flingBtn = false, nil
+flingBtn = CreateHackButton("Fling Mode [OFF]", TabMisc, function()
+    flingActive = not flingActive
+    if flingActive then
+        flingBtn.Text = "  > Fling Mode [ON]"
+        task.spawn(function()
+            while flingActive do
+                local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    if not hrp:FindFirstChild("FlingAV") then
+                        local bAV = Instance.new("BodyAngularVelocity"); bAV.Name, bAV.MaxTorque, bAV.AngularVelocity, bAV.Parent = "FlingAV", Vector3.new(0, math.huge, 0), Vector3.new(0, 99999, 0), hrp
+                    end
+                    hrp.AssemblyLinearVelocity = Vector3.new(9999, 9999, 9999)
+                end
+                task.wait(0.01)
+            end
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp and hrp:FindFirstChild("FlingAV") then hrp.FlingAV:Destroy() end
+        end)
+    else flingBtn.Text = "  > Fling Mode [OFF]" end
+end)
+
+local bangActive, bangBtn = false, nil
+local function getNearestPlayer()
+    local nearest, minDistance = nil, math.huge
+    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local dist = (myRoot.Position - p.Character.HumanoidRootPart.Position).Magnitude
+            if dist < minDistance then minDistance, nearest = dist, p end
+        end
+    end
+    return nearest
+end
+bangBtn = CreateHackButton("Bang Mode [OFF]", TabMisc, function()
+    bangActive = not bangActive
+    if bangActive then
+        bangBtn.Text = "  > Bang Mode [ON]"
+        task.spawn(function()
+            local toggle = false
+            while bangActive do
+                local target, myChar = getNearestPlayer(), LocalPlayer.Character
+                local myRoot, myHum = myChar and myChar:FindFirstChild("HumanoidRootPart"), myChar and myChar:FindFirstChildOfClass("Humanoid")
+                if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") and myRoot then
+                    if myHum then myHum.PlatformStand = true end
+                    toggle = not toggle
+                    myRoot.CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, toggle and 1.2 or 2.2)
+                else
+                    if myHum then myHum.PlatformStand = false end
+                end
+                task.wait(0.05)
+            end
+            local myHum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if myHum then myHum.PlatformStand = false end
+        end)
+    else bangBtn.Text = "  > Bang Mode [OFF]" end
+end)
+
+-- === СИСТЕМА PATPAT (ПОГЛАЖИВАНИЕ) ===
+local isPatting = false
+local patPatActive = false
+
+local function getHoveredPlayer()
+    local target = Mouse.Target
+    if target and target.Parent then
+        local char = target.Parent
+        if char:FindFirstChild("Humanoid") then return Players:GetPlayerFromCharacter(char) end
+        if char.Parent and char.Parent:FindFirstChild("Humanoid") then return Players:GetPlayerFromCharacter(char.Parent) end
+    end
+    return nil
+end
+
+local function getRightArm(character)
+    local arm = character:FindFirstChild("RightHand") or character:FindFirstChild("Right Arm")
+    if not arm then
+        for _, v in pairs(character:GetDescendants()) do
+            if v:IsA("BasePart") and (v.Name:find("Arm") or v.Name:find("Hand")) and v.Name:find("Right") then return v end
+        end
+    end
+    return arm
+end
+
+local patBtn = nil
+patBtn = CreateHackButton("PatPat (Key R) [OFF]", TabMisc, function()
+    patPatActive = not patPatActive
+    if patPatActive then
+        patBtn.Text = "  > PatPat (Key R) [ON]"
+    else
+        patBtn.Text = "  > PatPat (Key R) [OFF]"
+    end
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed or isPatting or not patPatActive then return end
+    
+    if input.KeyCode == Enum.KeyCode.R then
+        local targetPlayer = getHoveredPlayer()
+        
+        if targetPlayer and targetPlayer.Character and LocalPlayer.Character then
+            local myChar = LocalPlayer.Character
+            local targetChar = targetPlayer.Character
+            local targetHead = targetChar:FindFirstChild("Head")
+            local myArm = getRightArm(myChar)
+            
+            if targetHead and myArm then
+                isPatting = true
+                
+                local joints = {}
+                for _, joint in pairs(myChar:GetDescendants()) do
+                    if joint:IsA("Motor6D") and (joint.Part0 == myArm or joint.Part1 == myArm) then
+                        joint.Enabled = false
+                        table.insert(joints, joint)
+                    end
+                end
+                
+                print("Гладим ладонью с идеальными углами: " .. targetPlayer.Name)
+                
+                local startTime = tick()
+                local duration = 2.0 
+                
+                local connection
+                connection = RunService.Heartbeat:Connect(function()
+                    local elapsed = tick() - startTime
+                    if elapsed >= duration then
+                        if connection then connection:Disconnect() end
+                        return
+                    end
+                    
+                    if myArm:IsA("BasePart") then myArm.LocalTransparencyModifier = 0 end
+                    for _, child in pairs(myArm:GetChildren()) do
+                        if child:IsA("BasePart") then child.LocalTransparencyModifier = 0 end
+                    end
+                    
+                    local wave = math.sin(tick() * 15) * 0.1
+                    local basePosition = targetHead.CFrame * CFrame.new(0, 1.4 + wave, 0.35)
+                    local rotation = CFrame.Angles(math.rad(40), math.rad(45), math.rad(20))
+                    
+                    myArm.CFrame = basePosition * rotation
+                end)
+                
+                task.spawn(function()
+                    task.wait(duration)
+                    if connection and connection.Connected then connection:Disconnect() end
+                    for _, joint in pairs(joints) do joint.Enabled = true end
+                    isPatting = false
+                end)
+            end
+        end
+    end
+end)
+
+local skyChanged = false
+CreateHackButton("Und3r C0NNstruCt1ON 🚧", TabSettings, function()
+    skyChanged = not skyChanged
+    local lighting = game:GetService("Lighting")
+    if skyChanged then
+        local sky = Instance.new("Sky"); sky.Name, sky.SkyboxBk, sky.SkyboxDn, sky.SkyboxFt, sky.SkyboxLf, sky.SkyboxRt, sky.SkyboxUp, sky.Parent = "c00lSkyEffect", "rbxassetid://252758119", "rbxassetid://252758119", "rbxassetid://252758119", "rbxassetid://252758119", "rbxassetid://252758119", "rbxassetid://252758119", lighting
+    else if lighting:FindFirstChild("c00lSkyEffect") then lighting.c00lSkyEffect:Destroy() end end
+end)
+
+CreateHackButton("📬 Copy Discord Link", TabSettings, function()
+    local url = "https://discord.gg/Fy2XdTHry"
+    if setclipboard then setclipboard(url) end
+    pcall(function() StarterGui:SetCore("SendNotification", {Title = "Discord", Text = "Ссылка скопирована!\n" .. url, Icon = "rbxassetid://4096031850", Duration = 5}) end)
+end)
+
+local function CleanUp()
+    teleportBotActive, harakiriActive, trailActive2, flingActive, bangActive, patPatActive = false, false, false, false, false, false
+    if flyConnection then flyConnection:Disconnect() end
+    if noclipConnection then noclipConnection:Disconnect() end
+    if infJumpConnection then infJumpConnection:Disconnect() end
+    if spinBav then spinBav:Destroy() end
+    local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then if hrp:FindFirstChild("SpinBAV") then hrp.SpinBAV:Destroy() end if hrp:FindFirstChild("FlingAV") then hrp.FlingAV:Destroy() end end
+    ScreenGui:Destroy()
+end
+CloseButton.MouseButton1Click:Connect(CleanUp)
+CreateHackButton("Destroy GUI 🗑️", TabSettings, function() CleanUp() end)
+
+task.spawn(function()
+    LoadingStatus.Text = "Загрузка модулей..."
+    TweenService:Create(BarFill, TweenInfo.new(0.6, Enum.EasingStyle.Linear), {Size = UDim2.new(0.4, 0, 1, 0)}):Play(); task.wait(0.7)
+    LoadingStatus.Text = "Компиляция вкладок..."
+    TweenService:Create(BarFill, TweenInfo.new(0.8, Enum.EasingStyle.Linear), {Size = UDim2.new(0.8, 0, 1, 0)}):Play(); task.wait(0.9)
+    LoadingStatus.Text = "Запуск Eng1n3..."
+    TweenService:Create(BarFill, TweenInfo.new(0.4, Enum.EasingStyle.Linear), {Size = UDim2.new(1, 0, 1, 0)}):Play(); task.wait(0.5)
+    LoadingStatus.Text, LoadingStatus.TextColor3 = "SuCC3ssFu11y!", COLORS.Accent
+    task.wait(0.3)
+    local fadeOut = TweenService:Create(LoadingFrame, TweenInfo.new(0.3), {BackgroundTransparency = 1, BorderSizePixel = 0})
+    TweenService:Create(LoadingTitle, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+    TweenService:Create(LoadingStatus, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+    TweenService:Create(BarBg, TweenInfo.new(0.3), {BackgroundTransparency = 1, BorderSizePixel = 0}):Play()
+    TweenService:Create(BarFill, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+    fadeOut:Play()
+    fadeOut.Completed:Connect(function()
+        LoadingFrame:Destroy()
+        MainFrame.Size, MainFrame.BackgroundTransparency, MainFrame.Visible = UDim2.new(0, 430, 0, 310), 1, true
+        TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 480, 0, 360), BackgroundTransparency = 0}):Play()
+        pcall(function() StarterGui:SetCore("SendNotification", {Title = "Ex00us1a GUI v3.5", Text = "Интерфейс успешно обновлен!", Icon = "rbxassetid://6031087856", Duration = 5}) end)
+    end)
+end)
+
+task.spawn(function()
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local head = character:WaitForChild("Head", 5)
+    if head then pcall(function() game:GetService("Chat"):Chat(head, "Пу-пу-пу") end) end
+end)
