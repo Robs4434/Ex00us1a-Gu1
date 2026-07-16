@@ -468,7 +468,7 @@ local function CreateStatLabel(text)
     label.TextColor3 = COLORS.Text
     RegisterAccent(label, "TextColor3")
     label.Font = Enum.Font.Code
-    label.TextSize = 13
+    label.TextSize = 10
     label.Parent = StatsContainer
     return label
 end
